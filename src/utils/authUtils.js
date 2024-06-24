@@ -1,9 +1,20 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export function generateAccessToken(user) {
-    return jwt.sign({ id: user._id, username: user.username}, 'kitri_secret', { expiresIn : '5m'})
+  return jwt.sign(
+    { id: user._id, username: user.username },
+    process.env.JWT_SECRET,
+    { expiresIn: "5m" }
+  );
 }
 
 export function generateRefreshToken(user) {
-    return jwt.sign({ id: user._id, username : user.username}, 'kitri_secret2', { expiresIn : '1h'})
+  return jwt.sign(
+    { id: user._id, username: user.username },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "1h" }
+  );
 }
