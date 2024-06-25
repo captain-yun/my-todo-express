@@ -37,12 +37,20 @@ jobs:
         run: |
           aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ env.ipv4 }}/32
 
+      - name: Write SSH key
+        run: echo "${{ secrets.EC2_SSH_KEY }}" > ssh_key.pem
+        shell: bash
+
+      - name: Set SSH key permissions
+        run: chmod 600 ssh_key.pem
+        shell: bash
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key_path: ./ssh_key.pem
           script: |
             cd /home/ubuntu/my-todo-express
             git pull origin main
