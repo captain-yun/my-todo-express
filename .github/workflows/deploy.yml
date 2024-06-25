@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - main
-#
+
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,13 +21,31 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Build project
+        run: npm run build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Get GitHub Actions Runner IP
+        id: ip
+        run: |
+          echo "ipv4=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_ENV
+
+      - name: Add GitHub Actions IP to Security group
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ env.ipv4 }}/32
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          key_type: "base64"
           script: |
             cd /home/ubuntu/my-todo-express
             git pull origin main
